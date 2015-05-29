@@ -47,7 +47,7 @@ module CueSnap
       @options = Hashie::Mash.new options
       @output_folder = @options.output_folder
       @output_folder ||= mp3_filename
-      @progress = options.report_progress_to
+      @progress = @options.report_progress_to
     end
 
     # Internal: Parses the cue file using RubyCue and sets the @cuesheet
@@ -110,7 +110,7 @@ module CueSnap
         PTY.spawn(command) do |stdout, stdin, pid|
           begin
             stdout.each do |line| 
-              if line.start_with? /\s+File\s/
+              if line.start_with? '   File '
                 @progress.increment unless @progress.nil?
               end
             end
