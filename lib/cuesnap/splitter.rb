@@ -100,6 +100,7 @@ module CueSnap
                  "-o #{format}",
                  "-c #{escaped_cue_file}"]
       command.push '-Q' if @options.quiet
+      command.push '-D'
       command.push escaped_mp3_file
 
       pty_spawn command.join(' ')
@@ -110,7 +111,8 @@ module CueSnap
         PTY.spawn(command) do |stdout, stdin, pid|
           begin
             stdout.each do |line| 
-              if line.start_with? '   File '
+              # puts "lkasjdf;lkjdsf #{line}"
+              if line.start_with? 'Output filename is '
                 @progress.increment unless @progress.nil?
               end
             end
