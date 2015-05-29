@@ -1,3 +1,4 @@
+require 'pty'
 require 'hashie'
 require 'rubycue'
 require 'shellwords'
@@ -24,6 +25,8 @@ module CueSnap
     #             no_numbers - No number prefix for tracks.
     #             output_folder - The output folder to use (default: the name
     #               of the mp3).
+    #             format - Of split tracks. Passed directly to mp3split
+    #             report_progress_to - ProgressBar
     #
     # Returns the initalized object.
     def initialize(mp3_file, cue_file = nil, options = {})
@@ -44,6 +47,7 @@ module CueSnap
       @options = Hashie::Mash.new options
       @output_folder = @options.output_folder
       @output_folder ||= mp3_filename
+      @progress = options.report_progress_to
     end
 
     # Internal: Parses the cue file using RubyCue and sets the @cuesheet
@@ -78,6 +82,8 @@ module CueSnap
       # changes it before we split.
       parse_cue_file
 
+      @progress.total = @cuesheet.songs.length unless @progress.nil?
+
       format = @options.format or "@p - @t"
 
       unless @options.no_numbers or @options.format 
@@ -96,7 +102,23 @@ module CueSnap
       command.push '-Q' if @options.quiet
       command.push escaped_mp3_file
 
-      system command.join(' ')
+      pty_spawn command.join(' ')
+    end
+
+    def pty_spawn(command)
+      begin
+        PTY.spawn(command) do |stdout, stdin, pid|
+          begin
+            stdout.each do |line| 
+              if line.start_with? /\s+File\s/
+                @progress.increment unless @progress.nil?
+              end
+            end
+          rescue Errno::EIO
+          end
+        end
+      rescue PTY::ChildExited
+      end
     end
 
     # Public: The filename for the mp3 file with the .mp3 extension removed.
