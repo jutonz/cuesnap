@@ -78,11 +78,13 @@ module CueSnap
       # changes it before we split.
       parse_cue_file
 
-      format = "@p - @t"
+      format = @options.format or "@p - @t"
 
-      song_count_length = (@cuesheet.songs.length + 1).to_s.length
-      number_format = "@N#{song_count_length > 1 ? song_count_length : ''}"
-      format = "#{number_format} #{format}" unless @options.no_numbers
+      unless @options.no_numbers or @options.format 
+        song_count_length = (@cuesheet.songs.length + 1).to_s.length
+        number_format = "@N#{song_count_length > 1 ? song_count_length : ''}"
+        format = "#{number_format} #{format}"
+      end
 
       # Got to esape the spaces for the shell
       format = Shellwords.escape format
